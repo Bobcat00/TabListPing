@@ -67,7 +67,9 @@ public final class Listeners implements Listener
                 {
                     // Save time in hashmap
                     Player player = event.getPlayer();
-                    keepAliveTime.put(player.getUniqueId(), System.currentTimeMillis());
+                    UUID uuid = player.getUniqueId();
+                    Long currentTime = System.currentTimeMillis();
+                    keepAliveTime.put(uuid, currentTime); // possibly blocking
                 }
             }
         });
@@ -84,16 +86,15 @@ public final class Listeners implements Listener
                 if (event.getPacketType() == PacketType.Play.Client.KEEP_ALIVE)
                 {
                     // Get time from hashmap and calculate ping time in msec
-                    Long pingTime;
+                    Long currentTime = System.currentTimeMillis();
                     Player player = event.getPlayer();
                     UUID uuid = player.getUniqueId();
-                    if (keepAliveTime.containsKey(uuid))
+                    
+                    Long pingTime = (long) 0;
+                    Long startTime = keepAliveTime.get(uuid); // possibly blocking
+                    if (startTime != null)
                     {
-                        pingTime = System.currentTimeMillis() - keepAliveTime.get(uuid);
-                    }
-                    else
-                    {
-                        pingTime = (long) 0;
+                        pingTime = currentTime - startTime;
                     }
                     
                     // Put ping time in tab list
@@ -111,7 +112,8 @@ public final class Listeners implements Listener
     public void onPlayerQuit(PlayerQuitEvent event)
     {
         Player player = event.getPlayer();
-        keepAliveTime.remove(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+        keepAliveTime.remove(uuid); // possibly blocking
     }
     
 }    
