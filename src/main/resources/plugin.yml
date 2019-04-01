@@ -1,0 +1,5 @@
+name: TabListPing
+main: com.bobcat00.tablistping.TabListPing
+version: 0.01
+author: Bobcat00
+depend: [ProtocolLib]
