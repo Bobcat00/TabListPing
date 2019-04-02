@@ -16,6 +16,7 @@
 
 package com.bobcat00.tablistping;
 
+import org.bukkit.configuration.file.FileConfigurationOptions;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.bobcat00.tablistping.Listeners;
@@ -26,6 +27,11 @@ public class TabListPing extends JavaPlugin {
     
     @Override
     public void onEnable() {
+        this.saveDefaultConfig();
+        FileConfigurationOptions configOptions = this.getConfig().options();
+        configOptions.header("# Supported variables are %name%, %displayname%, and %ping%");
+        this.saveConfig();
+
         listeners = new Listeners(this);
     }
         

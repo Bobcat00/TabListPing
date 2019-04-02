@@ -19,7 +19,6 @@ package com.bobcat00.tablistping;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -90,7 +89,7 @@ public final class Listeners implements Listener
                     Player player = event.getPlayer();
                     UUID uuid = player.getUniqueId();
                     
-                    Long pingTime = (long) 0;
+                    Long pingTime = 0L;
                     Long startTime = keepAliveTime.get(uuid); // possibly blocking
                     if (startTime != null)
                     {
@@ -98,8 +97,11 @@ public final class Listeners implements Listener
                     }
                     
                     // Put ping time in tab list
-                    String suffix = "&7[&a%ping%ms&7]"; // put this in config
-                    player.setPlayerListName(player.getName() + " " + ChatColor.translateAlternateColorCodes('&', suffix.replace("%ping%", "" + pingTime)));
+                    String format = plugin.getConfig().getString("format");
+                    player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
+                            format.replace("%name%",        player.getName()).
+                                   replace("%displayname%", player.getDisplayName()).
+                                   replace("%ping%",        pingTime.toString())));
                 }
             }
         });
@@ -108,9 +110,10 @@ public final class Listeners implements Listener
     
     // Player quit
     
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event)
     {
+        // Remove player's entry from hashmap
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         keepAliveTime.remove(uuid); // possibly blocking
