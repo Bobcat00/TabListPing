@@ -16,6 +16,7 @@
 
 package com.bobcat00.tablistping;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -86,7 +87,7 @@ public final class Listeners implements Listener
                 {
                     // Get time from hashmap and calculate ping time in msec
                     Long currentTime = System.currentTimeMillis();
-                    Player player = event.getPlayer();
+                    final Player player = event.getPlayer();
                     UUID uuid = player.getUniqueId();
                     
                     Long pingTime = 0L;
@@ -95,13 +96,25 @@ public final class Listeners implements Listener
                     {
                         pingTime = currentTime - startTime;
                     }
+                    final Long ping = pingTime;
                     
-                    // Put ping time in tab list
-                    String format = plugin.getConfig().getString("format");
-                    player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
-                            format.replace("%name%",        player.getName()).
-                                   replace("%displayname%", player.getDisplayName()).
-                                   replace("%ping%",        pingTime.toString())));
+                    // go to the main thread
+                    Bukkit.getScheduler().runTask(plugin, new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            if (player.isOnline())
+                            {
+                                // Put ping time in tab list
+                                String format = plugin.getConfig().getString("format");
+                                player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
+                                        format.replace("%name%",        player.getName()).
+                                               replace("%displayname%", player.getDisplayName()).
+                                               replace("%ping%",        ping.toString())));
+                            }
+                        }
+                    });
                 }
             }
         });
