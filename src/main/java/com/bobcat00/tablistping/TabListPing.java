@@ -16,28 +16,48 @@
 
 package com.bobcat00.tablistping;
 
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.configuration.file.FileConfigurationOptions;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.bobcat00.tablistping.Listeners;
-
-public class TabListPing extends JavaPlugin {
-    
+public class TabListPing extends JavaPlugin
+{
     Listeners listeners;
     
     @Override
-    public void onEnable() {
+    public void onEnable()
+    {
         this.saveDefaultConfig();
         FileConfigurationOptions configOptions = this.getConfig().options();
         configOptions.header("# Supported variables are %name%, %displayname%, and %ping%");
         this.saveConfig();
 
         listeners = new Listeners(this);
+        
+        // Metrics
+        int pluginId = 10623;
+        Metrics metrics = new Metrics(this, pluginId);
+        
+        String format = this.getConfig().getString("format");
+        boolean name = format.contains("%name%");
+        boolean displayname = format.contains("%displayname%");
+        String option = "Neither";
+        if (name && !displayname)
+            option = "Name";
+        else if (!name && displayname)
+            option = "Displayname";
+        else if (name && displayname)
+            option = "Both";
+        final String setting = option;
+        metrics.addCustomChart(new SimplePie("format", () -> setting));
+        
+        getLogger().info("You may opt-out of metrics by changing plugins/bStats/config.yml");
     }
         
     @Override
-    public void onDisable() {
+    public void onDisable()
+    {
         //
     }
-
 }
