@@ -3,3 +3,4 @@ main: com.bobcat00.tablistping.TabListPing
 version: ${project.version}
 author: Bobcat00
 depend: [ProtocolLib]
+softdepend: [Essentials]

@@ -31,6 +31,10 @@ public class TabListPing extends JavaPlugin
         this.saveDefaultConfig();
         FileConfigurationOptions configOptions = this.getConfig().options();
         configOptions.header("# Supported variables are %name%, %displayname%, and %ping%");
+        if (!this.getConfig().contains("format-afk", true))
+        {
+            this.getConfig().set("format-afk", this.getConfig().getString("format") + " &eAFK");
+        }
         this.saveConfig();
 
         listeners = new Listeners(this);
@@ -52,7 +56,7 @@ public class TabListPing extends JavaPlugin
         final String setting = option;
         metrics.addCustomChart(new SimplePie("format", () -> setting));
         
-        getLogger().info("You may opt-out of metrics by changing plugins/bStats/config.yml");
+        getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
     }
         
     @Override

@@ -1,2 +1,3 @@
 # Supported variables are %name%, %displayname%, and %ping%
 format: '%name% &7[&a%ping%ms&7]'
+format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
