@@ -34,6 +34,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 
 import com.earth2me.essentials.IEssentials;
+import com.earth2me.essentials.User;
 
 import net.ess3.api.IUser;
 import net.ess3.api.events.AfkStatusChangeEvent;
@@ -155,7 +156,11 @@ public final class Listeners implements Listener
                                 boolean afk = false;
                                 if (ess != null)
                                 {
-                                    afk = ess.getUser(player).isAfk();
+                                    User user = ess.getUser(player);
+                                    if (user != null)
+                                    {
+                                        afk = user.isAfk();
+                                    }
                                 }
                                 setTabList(player, ping, afk);
                             }
