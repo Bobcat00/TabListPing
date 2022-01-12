@@ -34,12 +34,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.4</version>
         <configuration>
           <relocations>
             <relocation>
               <pattern>org.bstats</pattern>
-              <shadedPattern>com.bobcat00.tablistping</shadedPattern>
+              <shadedPattern>com.bobcat00.tablistping.bstats</shadedPattern>
             </relocation>
           </relocations>
         </configuration>
@@ -70,10 +70,9 @@
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>1.12.2-R0.1-SNAPSHOT</version>
-      <type>jar</type>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot-api</artifactId>
+      <version>1.18.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

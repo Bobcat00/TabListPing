@@ -16,9 +16,10 @@
 
 package com.bobcat00.tablistping;
 
+import java.util.Arrays;
+
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
-import org.bukkit.configuration.file.FileConfigurationOptions;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class TabListPing extends JavaPlugin
@@ -29,8 +30,17 @@ public class TabListPing extends JavaPlugin
     public void onEnable()
     {
         this.saveDefaultConfig();
-        FileConfigurationOptions configOptions = this.getConfig().options();
-        configOptions.header("# Supported variables are %name%, %displayname%, and %ping%");
+        try
+        {
+            // 1.18.1+
+            this.getConfig().options().setHeader(Arrays.asList("Supported variables are %name%, %displayname%, and %ping%"));
+            this.getConfig().setComments("format", null); // get rid of old comments added improperly
+        }
+        catch (NoSuchMethodError e)
+        {
+            // Older versions - This may not be necessary
+            this.getConfig().options().header("# Supported variables are %name%, %displayname%, and %ping%");
+        }
         if (!this.getConfig().contains("format-afk", true))
         {
             this.getConfig().set("format-afk", this.getConfig().getString("format") + " &eAFK");
