@@ -86,9 +86,9 @@ public final class Listeners implements Listener
         
         // Keep Alive from server to client
         
-        protocolManager.addPacketListener(new PacketAdapter(plugin,
-                                                            ListenerPriority.NORMAL,
-                                                            PacketType.Play.Server.KEEP_ALIVE)
+        protocolManager.addPacketListener(new PacketAdapter(
+            PacketAdapter.params(plugin,
+                                 PacketType.Play.Server.KEEP_ALIVE).optionAsync())
         {
             @Override
             public void onPacketSending(PacketEvent event)
@@ -114,9 +114,9 @@ public final class Listeners implements Listener
         
         // Keep Alive response from client to server
 
-        protocolManager.addPacketListener(new PacketAdapter(plugin,
-                                                            ListenerPriority.NORMAL,
-                                                            PacketType.Play.Client.KEEP_ALIVE)
+        protocolManager.addPacketListener(new PacketAdapter(
+            PacketAdapter.params(plugin,
+                                 PacketType.Play.Client.KEEP_ALIVE).optionAsync())
         {
             @Override
             public void onPacketReceiving(PacketEvent event)
