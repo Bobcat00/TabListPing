@@ -22,51 +22,90 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.papermc.lib.PaperLib;
+
 public class TabListPing extends JavaPlugin
 {
     Listeners listeners;
+    TpsTask tpsTask;
     
     @Override
     public void onEnable()
     {
-        this.saveDefaultConfig();
-        try
+        saveDefaultConfig();
+        // Do some updating
+        getConfig().options().setHeader(null); // Remove old header
+        getConfig().setComments("format", Arrays.asList("Tab list player name format",
+                                                        "Use Minecraft color codes here",
+                                                        "Supported variables are %name%, %displayname%, and %ping%"));
+        // AFK string
+        if (!getConfig().contains("format-afk", true))
         {
-            // 1.18.1+
-            this.getConfig().options().setHeader(Arrays.asList("Supported variables are %name%, %displayname%, and %ping%"));
-            this.getConfig().setComments("format", null); // get rid of old comments added improperly
+            getConfig().set("format-afk", getConfig().getString("format") + " &eAFK");
         }
-        catch (NoSuchMethodError e)
+        // TPS/MSPT/Load section
+        if (!getConfig().contains("enable-tps", true))
         {
-            // Older versions - This may not be necessary
-            this.getConfig().options().header("# Supported variables are %name%, %displayname%, and %ping%");
+            getConfig().set("enable-tps",  false);
+            getConfig().set("format-header", "");
+            getConfig().set("format-footer", "<gray>TPS: %tps%   <gray>MSPT: %mspt%");
+            getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
+                                                                "Enable TPS/MSPT/Load/World display. Requires Paper.",
+                                                                "This section uses MiniMessage tags such as <blue> and <newline>",
+                                                                "Supported variables are %tps%, %mspt%, %load%, and %world%"));
         }
-        if (!this.getConfig().contains("format-afk", true))
+        // Enable metrics
+        if (!getConfig().contains("enable-metrics", true))
         {
-            this.getConfig().set("format-afk", this.getConfig().getString("format") + " &eAFK");
+            getConfig().set("enable-metrics",  true);
+            getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
+                                                                    "Enable metrics (subject to bStats global config)"));
         }
-        this.saveConfig();
+        // Finally save the config
+        saveConfig();
 
+        // Start TPS task if enabled in config and running Paper
+        // Period is 5 seconds because that's the time period used for the average
+        if (getConfig().getBoolean("enable-tps"))
+        {
+            if (PaperLib.isPaper())
+            {
+                // Start periodic task
+                tpsTask = new TpsTask(this);
+                tpsTask.runTaskTimer(this,    // plugin
+                                     5L*20L,  // delay
+                                     5L*20L); // period
+            }
+            else
+            {
+                getLogger().warning("TPS/MSPT/Load display requires Paper.");
+            }
+        }
+        
+        // Start listeners after TPS task has started
         listeners = new Listeners(this);
         
         // Metrics
-        int pluginId = 10623;
-        Metrics metrics = new Metrics(this, pluginId);
-        
-        String format = this.getConfig().getString("format");
-        boolean name = format.contains("%name%");
-        boolean displayname = format.contains("%displayname%");
-        String option = "Neither";
-        if (name && !displayname)
-            option = "Name";
-        else if (!name && displayname)
-            option = "Displayname";
-        else if (name && displayname)
-            option = "Both";
-        final String setting = option;
-        metrics.addCustomChart(new SimplePie("format", () -> setting));
-        
-        getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
+        if (getConfig().getBoolean("enable-metrics"))
+        {
+            int pluginId = 10623;
+            Metrics metrics = new Metrics(this, pluginId);
+
+            String format = getConfig().getString("format");
+            boolean name = format.contains("%name%");
+            boolean displayname = format.contains("%displayname%");
+            String option = "Neither";
+            if (name && !displayname)
+                option = "Name";
+            else if (!name && displayname)
+                option = "Displayname";
+            else if (name && displayname)
+                option = "Both";
+            final String setting = option;
+            metrics.addCustomChart(new SimplePie("format", () -> setting));
+            metrics.addCustomChart(new SimplePie("enable_tps", () -> getConfig().getBoolean("enable-tps") ? "Yes" : "No"));
+            getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
+        }
     }
         
     @Override

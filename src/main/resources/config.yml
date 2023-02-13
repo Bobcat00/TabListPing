@@ -2,3 +2,13 @@
 
 format: '%name% &7[&a%ping%ms&7]'
 format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
+
+# Enable TPS/MSPT/Load/World display. Requires Paper.
+# This section uses MiniMessage tags such as <blue> and <newline>
+# Supported variables are %tps%, %mspt%, %load%, and %world%
+enable-tps: false
+format-header: ''
+format-footer: '<gray>TPS: %tps%   <gray>MSPT: %mspt%'
+
+# Enable metrics (subject to bStats global config)
+enable-metrics: true

@@ -22,6 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.Plugin;
@@ -55,6 +56,8 @@ public final class Listeners implements Listener
     // Map containing Keep Alive time and ping time
     private Map<UUID, List<Long>> keepAliveTime = Collections.synchronizedMap(new HashMap<UUID, List<Long>>());
     
+    // -------------------------------------------------------------------------
+    
     // Constructor
     
     public Listeners(TabListPing plugin)
@@ -76,6 +79,13 @@ public final class Listeners implements Listener
         plugin.getServer().getPluginManager().registerEvent(PlayerQuitEvent.class, this, EventPriority.MONITOR,
                 new EventExecutor() { public void execute(Listener l, Event e) { onPlayerQuit((PlayerQuitEvent)e); }},
                 plugin, true); // ignoreCancelled=true
+        
+        if (plugin.tpsTask != null)
+        {
+            plugin.getServer().getPluginManager().registerEvent(PlayerChangedWorldEvent.class, this, EventPriority.MONITOR,
+                    new EventExecutor() { public void execute(Listener l, Event e) { onChangedWorld((PlayerChangedWorldEvent)e); }},
+                    plugin, true); // ignoreCancelled=true
+        }
         
         if (ess != null)
         {
@@ -172,8 +182,11 @@ public final class Listeners implements Listener
 
     }
     
+    // -------------------------------------------------------------------------
+    
     // Set tab list - Call from main thread only
     
+    @SuppressWarnings("deprecation")
     private void setTabList(Player player, Long ping, boolean afk)
     {
         String format;
@@ -192,11 +205,14 @@ public final class Listeners implements Listener
                           replace("%ping%",        ping.toString())));
     }
     
+    // -------------------------------------------------------------------------
+    
     // AFK change
     
     public void onAfk(AfkStatusChangeEvent event)
     {
         IUser user = event.getAffected();
+        @SuppressWarnings("deprecation")
         Player player = user.getBase();
         if (player.isOnline())
         {
@@ -211,6 +227,8 @@ public final class Listeners implements Listener
         }
     }
     
+    // -------------------------------------------------------------------------
+    
     // Player quit or was kicked
     
     public void onPlayerQuit(PlayerQuitEvent event)
@@ -219,6 +237,16 @@ public final class Listeners implements Listener
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         keepAliveTime.remove(uuid); // possibly blocking
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Player changed world - Used for header/footer
+    
+    public void onChangedWorld(PlayerChangedWorldEvent event)
+    {
+        Player player = event.getPlayer();
+        plugin.tpsTask.setHeaderFooter(player);
     }
     
 }    
