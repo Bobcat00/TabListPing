@@ -8,7 +8,7 @@ format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
 # Supported variables are %tps%, %mspt%, %load%, and %world%
 enable-tps: false
 format-header: ''
-format-footer: '<gray>TPS: %tps%   <gray>MSPT: %mspt%'
+format-footer: '<gray>TPS: %tps%   MSPT: %mspt%'
 
 # Enable metrics (subject to bStats global config)
 enable-metrics: true

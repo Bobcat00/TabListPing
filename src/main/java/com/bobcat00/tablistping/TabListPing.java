@@ -34,33 +34,31 @@ public class TabListPing extends JavaPlugin
     {
         saveDefaultConfig();
         // Do some updating
-        getConfig().options().setHeader(null); // Remove old header
-        getConfig().setComments("format", Arrays.asList("Tab list player name format",
-                                                        "Use Minecraft color codes here",
-                                                        "Supported variables are %name%, %displayname%, and %ping%"));
-        // AFK string
         if (!getConfig().contains("format-afk", true))
         {
             getConfig().set("format-afk", getConfig().getString("format") + " &eAFK");
         }
-        // TPS/MSPT/Load section
         if (!getConfig().contains("enable-tps", true))
         {
             getConfig().set("enable-tps",  false);
             getConfig().set("format-header", "");
-            getConfig().set("format-footer", "<gray>TPS: %tps%   <gray>MSPT: %mspt%");
-            getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
-                                                                "Enable TPS/MSPT/Load/World display. Requires Paper.",
-                                                                "This section uses MiniMessage tags such as <blue> and <newline>",
-                                                                "Supported variables are %tps%, %mspt%, %load%, and %world%"));
+            getConfig().set("format-footer", "<gray>TPS: %tps%   MSPT: %mspt%");
         }
-        // Enable metrics
         if (!getConfig().contains("enable-metrics", true))
         {
             getConfig().set("enable-metrics",  true);
-            getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
-                                                                    "Enable metrics (subject to bStats global config)"));
         }
+        // Always refresh comments
+        getConfig().options().setHeader(null); // Remove old header
+        getConfig().setComments("format", Arrays.asList("Tab list player name format",
+                                                        "Use Minecraft color codes here",
+                                                        "Supported variables are %name%, %displayname%, and %ping%"));
+        getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
+                                                            "Enable TPS/MSPT/Load/World display. Requires Paper.",
+                                                            "This section uses MiniMessage tags such as <blue> and <newline>",
+                                                            "Supported variables are %tps%, %mspt%, %load%, and %world%"));
+        getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
+                                                                "Enable metrics (subject to bStats global config)"));
         // Finally save the config
         saveConfig();
 
