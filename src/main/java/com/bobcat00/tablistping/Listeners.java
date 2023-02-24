@@ -80,12 +80,9 @@ public final class Listeners implements Listener
                 new EventExecutor() { public void execute(Listener l, Event e) { onPlayerQuit((PlayerQuitEvent)e); }},
                 plugin, true); // ignoreCancelled=true
         
-        if (plugin.tpsTask != null)
-        {
-            plugin.getServer().getPluginManager().registerEvent(PlayerChangedWorldEvent.class, this, EventPriority.MONITOR,
-                    new EventExecutor() { public void execute(Listener l, Event e) { onChangedWorld((PlayerChangedWorldEvent)e); }},
-                    plugin, true); // ignoreCancelled=true
-        }
+        plugin.getServer().getPluginManager().registerEvent(PlayerChangedWorldEvent.class, this, EventPriority.MONITOR,
+                new EventExecutor() { public void execute(Listener l, Event e) { onChangedWorld((PlayerChangedWorldEvent)e); }},
+                plugin, true); // ignoreCancelled=true
         
         if (ess != null)
         {
@@ -192,11 +189,11 @@ public final class Listeners implements Listener
         String format;
         if (afk)
         {
-            format = plugin.getConfig().getString("format-afk");
+            format = plugin.config.getFormatAfk();
         }
         else
         {
-            format = plugin.getConfig().getString("format");
+            format = plugin.config.getFormat();
         }
         // Put ping time in tab list
         player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
@@ -245,8 +242,11 @@ public final class Listeners implements Listener
     
     public void onChangedWorld(PlayerChangedWorldEvent event)
     {
-        Player player = event.getPlayer();
-        plugin.tpsTask.setHeaderFooter(player);
+        if (plugin.config.getEnableTps() && (plugin.tpsTask != null))
+        {
+            Player player = event.getPlayer();
+            plugin.tpsTask.setHeaderFooter(player);
+        }
     }
     
 }    

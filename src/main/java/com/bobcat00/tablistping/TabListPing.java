@@ -16,8 +16,6 @@
 
 package com.bobcat00.tablistping;
 
-import java.util.Arrays;
-
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,45 +24,28 @@ import io.papermc.lib.PaperLib;
 
 public class TabListPing extends JavaPlugin
 {
+    Config    config;
     Listeners listeners;
-    TpsTask tpsTask;
+    TpsTask   tpsTask;
+    Commands  commands;
     
     @Override
     public void onEnable()
     {
+        // Config
+        
+        config = new Config(this);
+        
         saveDefaultConfig();
-        // Do some updating
-        if (!getConfig().contains("format-afk", true))
-        {
-            getConfig().set("format-afk", getConfig().getString("format") + " &eAFK");
-        }
-        if (!getConfig().contains("enable-tps", true))
-        {
-            getConfig().set("enable-tps",  false);
-            getConfig().set("format-header", "");
-            getConfig().set("format-footer", "<gray>TPS: %tps%   MSPT: %mspt%");
-        }
-        if (!getConfig().contains("enable-metrics", true))
-        {
-            getConfig().set("enable-metrics",  true);
-        }
-        // Always refresh comments
-        getConfig().options().setHeader(null); // Remove old header
-        getConfig().setComments("format", Arrays.asList("Tab list player name format",
-                                                        "Use Minecraft color codes here",
-                                                        "Supported variables are %name%, %displayname%, and %ping%"));
-        getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
-                                                            "Enable TPS/MSPT/Load/World display. Requires Paper.",
-                                                            "This section uses MiniMessage tags such as <blue> and <newline>",
-                                                            "Supported variables are %tps%, %mspt%, %load%, and %world%"));
-        getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
-                                                                "Enable metrics (subject to bStats global config)"));
-        // Finally save the config
+        
+        config.updateConfig();
+        config.setComments();
         saveConfig();
 
         // Start TPS task if enabled in config and running Paper
         // Period is 5 seconds because that's the time period used for the average
-        if (getConfig().getBoolean("enable-tps"))
+        
+        if (config.getEnableTps())
         {
             if (PaperLib.isPaper())
             {
@@ -76,20 +57,28 @@ public class TabListPing extends JavaPlugin
             }
             else
             {
-                getLogger().warning("TPS/MSPT/Load display requires Paper.");
+                getLogger().warning("TPS/MSPT/Load/World display requires Paper.");
             }
         }
         
         // Start listeners after TPS task has started
+        
         listeners = new Listeners(this);
         
+        // Commands
+        
+        commands = new Commands(this);
+        this.getCommand("tablistping").setExecutor(commands);
+        this.getCommand("tablistping").setTabCompleter(commands);
+        
         // Metrics
-        if (getConfig().getBoolean("enable-metrics"))
+        
+        if (config.getEnableMetrics())
         {
             int pluginId = 10623;
             Metrics metrics = new Metrics(this, pluginId);
 
-            String format = getConfig().getString("format");
+            String format = config.getFormat();
             boolean name = format.contains("%name%");
             boolean displayname = format.contains("%displayname%");
             String option = "Neither";
@@ -101,7 +90,7 @@ public class TabListPing extends JavaPlugin
                 option = "Both";
             final String setting = option;
             metrics.addCustomChart(new SimplePie("format", () -> setting));
-            metrics.addCustomChart(new SimplePie("enable_tps", () -> getConfig().getBoolean("enable-tps") ? "Yes" : "No"));
+            metrics.addCustomChart(new SimplePie("enable_tps", () -> config.getEnableTps() ? "Yes" : "No"));
             getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
         }
     }

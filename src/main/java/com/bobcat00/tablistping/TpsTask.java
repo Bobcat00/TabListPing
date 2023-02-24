@@ -28,6 +28,7 @@ public class TpsTask extends BukkitRunnable
 {
     private TabListPing plugin;
     
+    // These variables have to be kept around for when a player changes worlds
     private String header = "";
     private String footer = "";
     
@@ -59,12 +60,12 @@ public class TpsTask extends BukkitRunnable
         final String loadString = new StringBuilder(msptColor).deleteCharAt(1).append(df1.format(mspt*2.0)).append(msptColor).append("%").toString();
         
         // Create the strings with the non-player-specific variables replaced
-        header = plugin.getConfig().getString("format-header");
+        header = plugin.config.getFormatHeader();
         header = header.replace("%tps%", tpsString).
                         replace("%mspt%", msptString).
                         replace("%load%", loadString);
         
-        footer = plugin.getConfig().getString("format-footer");
+        footer = plugin.config.getFormatFooter();
         footer = footer.replace("%tps%", tpsString).
                         replace("%mspt%", msptString).
                         replace("%load%", loadString);
@@ -93,5 +94,27 @@ public class TpsTask extends BukkitRunnable
             Component footerComponent = mm.deserialize(footer.replace("%world%", player.getWorld().getName()));
             player.sendPlayerListFooter(footerComponent);
         }
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Clear all headers and footers for all players, if they have the required
+    // permissions.
+    
+    void clearAllHeadersFooters()
+    {
+        for (Player player : plugin.getServer().getOnlinePlayers())
+        {
+            if (player.hasPermission("tablistping.header"))
+            {
+                player.sendPlayerListHeader(mm.deserialize(""));
+            }
+            if (player.hasPermission("tablistping.footer"))
+            {
+                player.sendPlayerListFooter(mm.deserialize(""));
+            }
+
+        }
+
     }
 }
