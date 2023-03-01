@@ -19,10 +19,16 @@ package com.bobcat00.tablistping;
 import java.util.Arrays;
 
 import io.papermc.lib.PaperLib;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class Config
 {
     private TabListPing plugin;
+    
+    private static final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
+    private static final MiniMessage mm = MiniMessage.miniMessage();
     
     public Config(TabListPing plugin)
     {
@@ -70,12 +76,24 @@ public class Config
     {
         if (!plugin.getConfig().contains("format", true))
         {
-            plugin.getConfig().set("format", "%name% &7[&a%ping%ms&7]");
+            plugin.getConfig().set("format", "%name% <gray>[<green>%ping%ms<gray>]");
+        }
+        else if (plugin.getConfig().getString("format").matches(".*&[0123456789abcdefklmnor].*"))
+        {
+            // Convert to MiniMessage tags
+            TextComponent tc = legacy.deserialize(plugin.getConfig().getString("format"));
+            plugin.getConfig().set("format", mm.serialize(tc));
         }
         
         if (!plugin.getConfig().contains("format-afk", true))
         {
-            plugin.getConfig().set("format-afk", plugin.getConfig().getString("format") + " &eAFK");
+            plugin.getConfig().set("format-afk", plugin.getConfig().getString("format") + " <yellow>AFK");
+        }
+        else if (plugin.getConfig().getString("format-afk").matches(".*&[0123456789abcdefklmnor].*"))
+        {
+            // Convert to MiniMessage tags
+            TextComponent tc = legacy.deserialize(plugin.getConfig().getString("format-afk"));
+            plugin.getConfig().set("format-afk", mm.serialize(tc));
         }
         
         if (!plugin.getConfig().contains("enable-tps", true))
@@ -101,12 +119,10 @@ public class Config
         plugin.getConfig().options().setHeader(null); // Remove old header
         
         plugin.getConfig().setComments("format", Arrays.asList("Tab list player name format",
-                                                               "Use Minecraft color codes here",
                                                                "Supported variables are %name%, %displayname%, and %ping%"));
         
         plugin.getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
                                                                    "Enable TPS/MSPT/Load/World display. Requires Paper.",
-                                                                   "This section uses MiniMessage tags such as <blue> and <newline>",
                                                                    "Supported variables are %tps%, %mspt%, %load%, and %world%"));
         
         plugin.getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line

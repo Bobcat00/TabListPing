@@ -24,6 +24,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
+// This class primarily handles updating the tab list header and footer,
+// including the TPS and load statistics.
+
 public class TpsTask extends BukkitRunnable
 {
     private TabListPing plugin;

@@ -1,10 +1,9 @@
+# Tab list player name format
 # Supported variables are %name%, %displayname%, and %ping%
-
-format: '%name% &7[&a%ping%ms&7]'
-format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
+format: '%name% <gray>[<green>%ping%ms<gray>]'
+format-afk: '%name% <gray>[<green>%ping%ms<gray>] <yellow>AFK'
 
 # Enable TPS/MSPT/Load/World display. Requires Paper.
-# This section uses MiniMessage tags such as <blue> and <newline>
 # Supported variables are %tps%, %mspt%, %load%, and %world%
 enable-tps: false
 format-header: ''
