@@ -3,8 +3,9 @@
 format: '%name% <gray>[<green>%ping%ms<gray>]'
 format-afk: '%name% <gray>[<green>%ping%ms<gray>] <yellow>AFK'
 
-# Enable TPS/MSPT/Load/World display. Requires Paper.
+# Enable TPS/MSPT/Load/World display
 # Supported variables are %tps%, %mspt%, %load%, and %world%
+# Spigot only supports %world%
 enable-tps: false
 format-header: ''
 format-footer: '<gray>TPS: %tps%   MSPT: %mspt%'

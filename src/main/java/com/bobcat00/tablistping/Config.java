@@ -18,7 +18,6 @@ package com.bobcat00.tablistping;
 
 import java.util.Arrays;
 
-import io.papermc.lib.PaperLib;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -122,8 +121,9 @@ public class Config
                                                                "Supported variables are %name%, %displayname%, and %ping%"));
         
         plugin.getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
-                                                                   "Enable TPS/MSPT/Load/World display. Requires Paper.",
-                                                                   "Supported variables are %tps%, %mspt%, %load%, and %world%"));
+                                                                   "Enable TPS/MSPT/Load/World display",
+                                                                   "Supported variables are %tps%, %mspt%, %load%, and %world%",
+                                                                   "Spigot only supports %world%"));
         
         plugin.getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
                                                                        "Enable metrics (subject to bStats global config)"));
@@ -151,18 +151,11 @@ public class Config
         {
             if (newEnableTps)
             {
-                if (PaperLib.isPaper())
-                {
-                    // Start a new periodic task
-                    plugin.tpsTask = new TpsTask(plugin);
-                    plugin.tpsTask.runTaskTimer(plugin,  // plugin
-                                                0,       // delay
-                                                5L*20L); // period
-                }
-                else
-                {
-                    plugin.getLogger().warning("TPS/MSPT/Load/World display requires Paper.");
-                }
+                // Start a new periodic task
+                plugin.tpsTask = new TpsTask(plugin);
+                plugin.tpsTask.runTaskTimer(plugin,  // plugin
+                                            0,       // delay
+                                            5L*20L); // period
             }
             else if (plugin.tpsTask != null)
             {

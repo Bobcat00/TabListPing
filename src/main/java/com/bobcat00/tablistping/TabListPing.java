@@ -20,8 +20,6 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import io.papermc.lib.PaperLib;
-
 public class TabListPing extends JavaPlugin
 {
     Config    config;
@@ -42,23 +40,16 @@ public class TabListPing extends JavaPlugin
         config.setComments();
         saveConfig();
 
-        // Start TPS task if enabled in config and running Paper
+        // Start TPS task if enabled in config
         // Period is 5 seconds because that's the time period used for the average
         
         if (config.getEnableTps())
         {
-            if (PaperLib.isPaper())
-            {
-                // Start periodic task
-                tpsTask = new TpsTask(this);
-                tpsTask.runTaskTimer(this,    // plugin
-                                     5L*20L,  // delay
-                                     5L*20L); // period
-            }
-            else
-            {
-                getLogger().warning("TPS/MSPT/Load/World display requires Paper.");
-            }
+            // Start periodic task
+            tpsTask = new TpsTask(this);
+            tpsTask.runTaskTimer(this,    // plugin
+                                 5L*20L,  // delay
+                                 5L*20L); // period
         }
         
         // Start listeners after TPS task has started

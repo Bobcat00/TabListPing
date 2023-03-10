@@ -21,8 +21,11 @@ import java.text.DecimalFormat;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import io.papermc.lib.PaperLib;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 // This class primarily handles updating the tab list header and footer,
 // including the TPS and load statistics.
@@ -35,6 +38,7 @@ public class TpsTask extends BukkitRunnable
     private String header = "";
     private String footer = "";
     
+    private static final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
     private static final MiniMessage mm = MiniMessage.miniMessage();
     
     public TpsTask(TabListPing plugin)
@@ -48,19 +52,34 @@ public class TpsTask extends BukkitRunnable
     @Override
     public void run()
     {
-        final double tps = StrictMath.min(plugin.getServer().getTPS()[0], 20.0);
-        final double mspt = plugin.getServer().getAverageTickTime();
+        String tpsString;
+        String msptString;
+        String loadString;
         
-        final DecimalFormat df1 = new DecimalFormat("#.0");
-        
-        // Colors for the numeric values. Closing tags are specified. The / will be removed when creating the opening tag.
-        final String tpsColor  = (tps  >= 18.0 ? "</green>" : tps  >= 15.0 ? "</yellow>" : "</red>");
-        final String msptColor = (mspt >= 50.0 ? "</red>"   : mspt >= 40.0 ? "</yellow>" : "</green>");
-        
-        // Build the replacement strings including the color tags
-        final String tpsString = new StringBuilder(tpsColor).deleteCharAt(1).append(df1.format(tps)).append(tpsColor).toString();
-        final String msptString = new StringBuilder(msptColor).deleteCharAt(1).append(df1.format(mspt)).append(msptColor).toString();
-        final String loadString = new StringBuilder(msptColor).deleteCharAt(1).append(df1.format(mspt*2.0)).append(msptColor).append("%").toString();
+        if (PaperLib.isPaper())
+        {
+            // Calculate TPS, MSPT, and load for Paper
+            final double tps = StrictMath.min(plugin.getServer().getTPS()[0], 20.0);
+            final double mspt = plugin.getServer().getAverageTickTime();
+
+            final DecimalFormat df1 = new DecimalFormat("#.0");
+
+            // Colors for the numeric values. Closing tags are specified. The / will be removed when creating the opening tag.
+            final String tpsColor  = (tps  >= 18.0 ? "</green>" : tps  >= 15.0 ? "</yellow>" : "</red>");
+            final String msptColor = (mspt >= 50.0 ? "</red>"   : mspt >= 40.0 ? "</yellow>" : "</green>");
+
+            // Build the replacement strings including the color tags
+            tpsString = new StringBuilder(tpsColor).deleteCharAt(1).append(df1.format(tps)).append(tpsColor).toString();
+            msptString = new StringBuilder(msptColor).deleteCharAt(1).append(df1.format(mspt)).append(msptColor).toString();
+            loadString = new StringBuilder(msptColor).deleteCharAt(1).append(df1.format(mspt*2.0)).append(msptColor).append("%").toString();
+        }
+        else
+        {
+            // Use empty strings for Spigot
+            tpsString = "";
+            msptString = "";
+            loadString = "";
+        }
         
         // Create the strings with the non-player-specific variables replaced
         header = plugin.config.getFormatHeader();
@@ -85,39 +104,76 @@ public class TpsTask extends BukkitRunnable
     // Set this player's header and footer. This uses the previously created
     // header and footer strings, and replaces the player's %world% variable.
     
+    @SuppressWarnings("deprecation")
     void setHeaderFooter(Player player)
     {
-        if (player.hasPermission("tablistping.header"))
+        if (PaperLib.isPaper())
         {
-            Component headerComponent = mm.deserialize(header.replace("%world%", player.getWorld().getName()));
-            player.sendPlayerListHeader(headerComponent);
+            if (player.hasPermission("tablistping.header"))
+            {
+                // Convert formatted MiniMessage to Component
+                Component headerComponent = mm.deserialize(header.replace("%world%", player.getWorld().getName()));
+                player.sendPlayerListHeader(headerComponent);
+            }
+            if (player.hasPermission("tablistping.footer"))
+            {
+                // Convert formatted MiniMessage to Component
+                Component footerComponent = mm.deserialize(footer.replace("%world%", player.getWorld().getName()));
+                player.sendPlayerListFooter(footerComponent);
+            }
         }
-        if (player.hasPermission("tablistping.footer"))
+        else
         {
-            Component footerComponent = mm.deserialize(footer.replace("%world%", player.getWorld().getName()));
-            player.sendPlayerListFooter(footerComponent);
+            if (player.hasPermission("tablistping.header"))
+            {
+                // Convert formatted MiniMessage to legacy string with section characters
+                Component headerComponent = mm.deserialize(header.replace("%world%", player.getWorld().getName()));
+                String legacyHeaderStr = legacy.serialize(headerComponent);
+                player.setPlayerListHeader(legacyHeaderStr);
+            }
+            if (player.hasPermission("tablistping.footer"))
+            {
+                // Convert formatted MiniMessage to legacy string with section characters
+                Component footerComponent = mm.deserialize(footer.replace("%world%", player.getWorld().getName()));
+                String legacyFooterStr = legacy.serialize(footerComponent);
+                player.setPlayerListFooter(legacyFooterStr);
+            }
         }
     }
     
     // -------------------------------------------------------------------------
     
-    // Clear all headers and footers for all players, if they have the required
+    // Clear all headers and footers for all players that have the required
     // permissions.
     
+    @SuppressWarnings("deprecation")
     void clearAllHeadersFooters()
     {
         for (Player player : plugin.getServer().getOnlinePlayers())
         {
-            if (player.hasPermission("tablistping.header"))
+            if (PaperLib.isPaper())
             {
-                player.sendPlayerListHeader(mm.deserialize(""));
+                if (player.hasPermission("tablistping.header"))
+                {
+                    player.sendPlayerListHeader(mm.deserialize(""));
+                }
+                if (player.hasPermission("tablistping.footer"))
+                {
+                    player.sendPlayerListFooter(mm.deserialize(""));
+                }
             }
-            if (player.hasPermission("tablistping.footer"))
+            else
             {
-                player.sendPlayerListFooter(mm.deserialize(""));
+                // Spigot
+                if (player.hasPermission("tablistping.header"))
+                {
+                    player.setPlayerListHeader("");
+                }
+                if (player.hasPermission("tablistping.footer"))
+                {
+                    player.setPlayerListFooter("");
+                }
             }
-
         }
-
     }
 }
