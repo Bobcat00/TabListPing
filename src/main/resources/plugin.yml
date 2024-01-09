@@ -3,7 +3,6 @@ main: com.bobcat00.tablistping.TabListPing
 version: ${project.version}
 author: Bobcat00
 api-version: 1.19
-depend: [ProtocolLib]
 softdepend: [Essentials]
 libraries:
     - net.kyori:adventure-api:4.12.0
