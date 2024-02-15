@@ -20,11 +20,23 @@ import java.util.Arrays;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class TabListPing extends JavaPlugin
+import com.comphenix.tinyprotocol.Reflection;
+import com.comphenix.tinyprotocol.TinyProtocol;
+
+import io.netty.channel.Channel;
+
+public class TabListPing extends JavaPlugin implements Listener
 {
     Listeners listeners;
+    TinyProtocol protocol;
+    
+    // Use Spigot mappings here
+    private Class<?> OUT_KEEP_ALIVE_PACKET = Reflection.getClass("net.minecraft.network.protocol.common.ClientboundKeepAlivePacket");
+    private Class<?> IN_KEEP_ALIVE_PACKET = Reflection.getClass("net.minecraft.network.protocol.common.ServerboundKeepAlivePacket");
     
     @Override
     public void onEnable()
@@ -48,6 +60,32 @@ public class TabListPing extends JavaPlugin
         this.saveConfig();
 
         listeners = new Listeners(this);
+        
+        // Protocol hooks
+        this.protocol = new TinyProtocol(this)
+        {
+            // Server to client
+            @Override
+            public Object onPacketOutAsync(Player receiver, Channel channel, Object packet)
+            {
+                if (OUT_KEEP_ALIVE_PACKET.isInstance(packet))
+                {
+                    listeners.processServerToClient(receiver);
+                }
+                return super.onPacketOutAsync(receiver, channel, packet);
+            }
+        
+            // Client to server
+            @Override
+            public Object onPacketInAsync(Player sender, Channel channel, Object packet)
+            {
+                if (IN_KEEP_ALIVE_PACKET.isInstance(packet))
+                {
+                    listeners.processClientToServer(sender);
+                }
+                return super.onPacketInAsync(sender, channel, packet);
+            }
+        };
         
         // Metrics
         int pluginId = 10623;

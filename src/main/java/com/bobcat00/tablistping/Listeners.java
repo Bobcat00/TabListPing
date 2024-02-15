@@ -26,13 +26,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.Plugin;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketEvent;
-
 import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
 
@@ -49,7 +42,6 @@ import java.util.UUID;
 public final class Listeners implements Listener
 {
     private TabListPing plugin;
-    private ProtocolManager protocolManager;
     private IEssentials ess;
     
     // Map containing Keep Alive time and ping time
@@ -60,9 +52,6 @@ public final class Listeners implements Listener
     public Listeners(TabListPing plugin)
     {
         this.plugin = plugin;
-        
-        // Hook in to ProtocolLib
-        protocolManager = ProtocolLibrary.getProtocolManager();
         
         // Hook in to Essentials
         Plugin essentials = Bukkit.getPluginManager().getPlugin("Essentials");
@@ -83,93 +72,76 @@ public final class Listeners implements Listener
                     new EventExecutor() { public void execute(Listener l, Event e) { onAfk((AfkStatusChangeEvent)e); }},
                     plugin, true); // ignoreCancelled=true);
         }
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Keep Alive from server to client
+    
+    public void processServerToClient(Player player)
+    {
+        // Save time in hashmap
+        UUID uuid = player.getUniqueId();
+        Long currentTime = System.currentTimeMillis();
+        List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
+        if (timeData == null)
+        {
+            timeData = new ArrayList<Long>(2);
+            timeData.add(0L);
+            timeData.add(0L);
+        }
+        timeData.set(0, currentTime);
+        keepAliveTime.put(uuid, timeData); // possibly blocking
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Keep Alive response from client to server
+    
+    public void processClientToServer(Player player)
+    {
+        // Get time from hashmap and calculate ping time in msec
+        Long currentTime = System.currentTimeMillis();
+        UUID uuid = player.getUniqueId();
         
-        // Keep Alive from server to client
+        Long pingTime = 0L;
+        List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
+        if (timeData == null)
+        {
+            timeData = new ArrayList<Long>(2);
+            timeData.add(0L);
+            timeData.add(0L);
+        }
+        else
+        {
+            pingTime = currentTime - timeData.get(0);
+            timeData.set(1, pingTime);
+        }
+        keepAliveTime.put(uuid, timeData); // possibly blocking
+        final Long ping = pingTime;
         
-        protocolManager.addPacketListener(new PacketAdapter(plugin,
-                                                            ListenerPriority.NORMAL,
-                                                            PacketType.Play.Server.KEEP_ALIVE)
+        // go to the main thread
+        Bukkit.getScheduler().runTask(plugin, new Runnable()
         {
             @Override
-            public void onPacketSending(PacketEvent event)
+            public void run()
             {
-                if (event.getPacketType() == PacketType.Play.Server.KEEP_ALIVE)
+                if (player.isOnline())
                 {
-                    // Save time in hashmap
-                    Player player = event.getPlayer();
-                    UUID uuid = player.getUniqueId();
-                    Long currentTime = System.currentTimeMillis();
-                    List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
-                    if (timeData == null)
+                    // Get AFK status
+                    boolean afk = false;
+                    if (ess != null)
                     {
-                        timeData = new ArrayList<Long>(2);
-                        timeData.add(0L);
-                        timeData.add(0L);
-                    }
-                    timeData.set(0, currentTime);
-                    keepAliveTime.put(uuid, timeData); // possibly blocking
-                }
-            }
-        });
-        
-        // Keep Alive response from client to server
-
-        protocolManager.addPacketListener(new PacketAdapter(plugin,
-                                                            ListenerPriority.NORMAL,
-                                                            PacketType.Play.Client.KEEP_ALIVE)
-        {
-            @Override
-            public void onPacketReceiving(PacketEvent event)
-            {
-                if (event.getPacketType() == PacketType.Play.Client.KEEP_ALIVE)
-                {
-                    // Get time from hashmap and calculate ping time in msec
-                    Long currentTime = System.currentTimeMillis();
-                    final Player player = event.getPlayer();
-                    UUID uuid = player.getUniqueId();
-                    
-                    Long pingTime = 0L;
-                    List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
-                    if (timeData == null)
-                    {
-                        timeData = new ArrayList<Long>(2);
-                        timeData.add(0L);
-                        timeData.add(0L);
-                    }
-                    else
-                    {
-                        pingTime = currentTime - timeData.get(0);
-                        timeData.set(1, pingTime);
-                    }
-                    keepAliveTime.put(uuid, timeData); // possibly blocking
-                    final Long ping = pingTime;
-                    
-                    // go to the main thread
-                    Bukkit.getScheduler().runTask(plugin, new Runnable()
-                    {
-                        @Override
-                        public void run()
+                        User user = ess.getUser(player);
+                        if (user != null)
                         {
-                            if (player.isOnline())
-                            {
-                                // Get AFK status
-                                boolean afk = false;
-                                if (ess != null)
-                                {
-                                    User user = ess.getUser(player);
-                                    if (user != null)
-                                    {
-                                        afk = user.isAfk();
-                                    }
-                                }
-                                setTabList(player, ping, afk);
-                            }
+                            afk = user.isAfk();
                         }
-                    });
+                    }
+                    setTabList(player, ping, afk);
                 }
             }
         });
-
     }
     
     // Set tab list - Call from main thread only
