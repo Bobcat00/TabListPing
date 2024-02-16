@@ -16,8 +16,6 @@
 
 package com.bobcat00.tablistping;
 
-import java.util.Arrays;
-
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.entity.Player;
@@ -31,7 +29,10 @@ import io.netty.channel.Channel;
 
 public class TabListPing extends JavaPlugin implements Listener
 {
+    Config    config;
     Listeners listeners;
+    TpsTask   tpsTask;
+    Commands  commands;
     TinyProtocol protocol;
     
     private Class<?> OUT_KEEP_ALIVE_PACKET;
@@ -40,17 +41,30 @@ public class TabListPing extends JavaPlugin implements Listener
     @Override
     public void onEnable()
     {
-        this.saveDefaultConfig();
+        // Config
         
-        this.getConfig().options().setHeader(Arrays.asList("Supported variables are %name%, %displayname%, and %ping%"));
-        this.getConfig().setComments("format", null); // get rid of old comments added improperly
+        config = new Config(this);
         
-        if (!this.getConfig().contains("format-afk", true))
-        {
-            this.getConfig().set("format-afk", this.getConfig().getString("format") + " &eAFK");
-        }
-        this.saveConfig();
+        saveDefaultConfig();
+        
+        config.updateConfig();
+        config.setComments();
+        saveConfig();
 
+        // Start TPS task if enabled in config
+        // Period is 5 seconds because that's the time period used for the average
+        
+        if (config.getEnableTps())
+        {
+            // Start periodic task
+            tpsTask = new TpsTask(this);
+            tpsTask.runTaskTimer(this,    // plugin
+                                 5L*20L,  // delay
+                                 5L*20L); // period
+        }
+        
+        // Start listeners after TPS task has started
+        
         listeners = new Listeners(this);
         
         // Protocol hooks
@@ -111,24 +125,34 @@ public class TabListPing extends JavaPlugin implements Listener
             }
         };
         
+        // Commands
+        
+        commands = new Commands(this);
+        this.getCommand("tablistping").setExecutor(commands);
+        this.getCommand("tablistping").setTabCompleter(commands);
+        
         // Metrics
-        int pluginId = 10623;
-        Metrics metrics = new Metrics(this, pluginId);
         
-        String format = this.getConfig().getString("format");
-        boolean name = format.contains("%name%");
-        boolean displayname = format.contains("%displayname%");
-        String option = "Neither";
-        if (name && !displayname)
-            option = "Name";
-        else if (!name && displayname)
-            option = "Displayname";
-        else if (name && displayname)
-            option = "Both";
-        final String setting = option;
-        metrics.addCustomChart(new SimplePie("format", () -> setting));
-        
-        getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
+        if (config.getEnableMetrics())
+        {
+            int pluginId = 10623;
+            Metrics metrics = new Metrics(this, pluginId);
+
+            String format = config.getFormat();
+            boolean name = format.contains("%name%");
+            boolean displayname = format.contains("%displayname%");
+            String option = "Neither";
+            if (name && !displayname)
+                option = "Name";
+            else if (!name && displayname)
+                option = "Displayname";
+            else if (name && displayname)
+                option = "Both";
+            final String setting = option;
+            metrics.addCustomChart(new SimplePie("format", () -> setting));
+            metrics.addCustomChart(new SimplePie("enable_tps", () -> config.getEnableTps() ? "Yes" : "No"));
+            getLogger().info("Metrics enabled if allowed by plugins/bStats/config.yml");
+        }
     }
         
     @Override

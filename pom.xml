@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bobcat00</groupId>
   <artifactId>TabListPing</artifactId>
-  <version>1.07-SNAPSHOT</version>
+  <version>2.00-SNAPSHOT</version>
   <build>
     <resources>
       <resource>
@@ -48,9 +48,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.3</version>
+        <version>3.6.0</version>
         <configuration>
           <relocations>
+            <relocation>
+              <pattern>io.papermc.lib</pattern>
+              <shadedPattern>com.bobcat00.tablistping.paperlib</shadedPattern>
+            </relocation>
             <relocation>
               <pattern>org.bstats</pattern>
               <shadedPattern>com.bobcat00.tablistping.bstats</shadedPattern>
@@ -70,8 +74,8 @@
   </build>
   <repositories>
     <repository>
-      <id>spigot-repo</id>
-      <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+      <id>papermc</id>
+      <url>https://papermc.io/repo/repository/maven-public/</url>
     </repository>
     <repository>
       <id>essentials-releases</id>
@@ -84,9 +88,15 @@
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>org.spigotmc</groupId>
-      <artifactId>spigot-api</artifactId>
-      <version>1.20.5-R0.1-SNAPSHOT</version>
+      <groupId>io.papermc</groupId>
+      <artifactId>paperlib</artifactId>
+      <version>1.0.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.papermc.paper</groupId>
+      <artifactId>paper-api</artifactId>
+      <version>1.20.4-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
