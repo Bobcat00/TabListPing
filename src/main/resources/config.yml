@@ -1,4 +1,14 @@
+# Tab list player name format
 # Supported variables are %name%, %displayname%, and %ping%
+format: '%name% <gray>[<green>%ping%ms<gray>]'
+format-afk: '%name% <gray>[<green>%ping%ms<gray>] <yellow>AFK'
 
-format: '%name% &7[&a%ping%ms&7]'
-format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
+# Enable TPS/MSPT/Load/World display
+# Supported variables are %tps%, %mspt%, %load%, and %world%
+# Spigot only supports %world%
+enable-tps: false
+format-header: ''
+format-footer: '<gray>TPS: %tps%   MSPT: %mspt%'
+
+# Enable metrics (subject to bStats global config)
+enable-metrics: true

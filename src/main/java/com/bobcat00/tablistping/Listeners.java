@@ -17,11 +17,11 @@
 package com.bobcat00.tablistping;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.Plugin;
@@ -29,8 +29,13 @@ import org.bukkit.plugin.Plugin;
 import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
 
+import io.papermc.lib.PaperLib;
 import net.ess3.api.IUser;
 import net.ess3.api.events.AfkStatusChangeEvent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,13 +44,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+// This class primarily handles updating each player's ping time in the tab list.
+
 public final class Listeners implements Listener
 {
     private TabListPing plugin;
     private IEssentials ess;
     
+    private static final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
+    private static final MiniMessage mm = MiniMessage.miniMessage();
+    
     // Map containing Keep Alive time and ping time
     private Map<UUID, List<Long>> keepAliveTime = Collections.synchronizedMap(new HashMap<UUID, List<Long>>());
+    
+    // -------------------------------------------------------------------------
     
     // Constructor
     
@@ -64,6 +76,10 @@ public final class Listeners implements Listener
         
         plugin.getServer().getPluginManager().registerEvent(PlayerQuitEvent.class, this, EventPriority.MONITOR,
                 new EventExecutor() { public void execute(Listener l, Event e) { onPlayerQuit((PlayerQuitEvent)e); }},
+                plugin, true); // ignoreCancelled=true
+        
+        plugin.getServer().getPluginManager().registerEvent(PlayerChangedWorldEvent.class, this, EventPriority.MONITOR,
+                new EventExecutor() { public void execute(Listener l, Event e) { onChangedWorld((PlayerChangedWorldEvent)e); }},
                 plugin, true); // ignoreCancelled=true
         
         if (ess != null)
@@ -144,31 +160,67 @@ public final class Listeners implements Listener
         });
     }
     
+    // -------------------------------------------------------------------------
+    
     // Set tab list - Call from main thread only
     
+    @SuppressWarnings("deprecation")
     private void setTabList(Player player, Long ping, boolean afk)
     {
         String format;
         if (afk)
         {
-            format = plugin.getConfig().getString("format-afk");
+            format = plugin.config.getFormatAfk();
         }
         else
         {
-            format = plugin.getConfig().getString("format");
+            format = plugin.config.getFormat();
         }
-        // Put ping time in tab list
-        player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
-                   format.replace("%name%",        player.getName()).
-                          replace("%displayname%", player.getDisplayName()).
-                          replace("%ping%",        ping.toString())));
+        
+        if (PaperLib.isPaper())
+        {
+            // Convert displayName to MiniMessage
+            String displayName = mm.serialize(player.displayName());
+            
+            // Replace variables in MiniMessage
+            format = format.replace("%name%",        player.getName()).
+                            replace("%displayname%", displayName).
+                            replace("%ping%",        ping.toString());
+
+            // Convert formatted MiniMessage to Component
+            Component component = mm.deserialize(format);
+            
+            // Put in tab list
+            player.playerListName(component);
+        }
+        else
+        {
+            // Convert displayName with section characters to MiniMessage
+            TextComponent tc = legacy.deserialize(player.getDisplayName());
+            String displayName = mm.serialize(tc);
+            
+            // Replace variables in MiniMessage
+            format = format.replace("%name%",        player.getName()).
+                            replace("%displayname%", displayName).
+                            replace("%ping%",        ping.toString());
+
+            // Convert formatted MiniMessage to legacy string with section characters
+            Component component = mm.deserialize(format);
+            String legacyStr = legacy.serialize(component);
+            
+            // Put in tab list
+            player.setPlayerListName(legacyStr);
+        }
     }
+    
+    // -------------------------------------------------------------------------
     
     // AFK change
     
     public void onAfk(AfkStatusChangeEvent event)
     {
         IUser user = event.getAffected();
+        @SuppressWarnings("deprecation")
         Player player = user.getBase();
         if (player.isOnline())
         {
@@ -183,6 +235,8 @@ public final class Listeners implements Listener
         }
     }
     
+    // -------------------------------------------------------------------------
+    
     // Player quit or was kicked
     
     public void onPlayerQuit(PlayerQuitEvent event)
@@ -191,6 +245,19 @@ public final class Listeners implements Listener
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         keepAliveTime.remove(uuid); // possibly blocking
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Player changed world - Used for header/footer
+    
+    public void onChangedWorld(PlayerChangedWorldEvent event)
+    {
+        if (plugin.config.getEnableTps() && (plugin.tpsTask != null))
+        {
+            Player player = event.getPlayer();
+            plugin.tpsTask.setHeaderFooter(player);
+        }
     }
     
 }    
