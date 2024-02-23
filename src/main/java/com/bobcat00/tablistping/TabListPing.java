@@ -42,17 +42,10 @@ public class TabListPing extends JavaPlugin implements Listener
     public void onEnable()
     {
         this.saveDefaultConfig();
-        try
-        {
-            // 1.18.1+
-            this.getConfig().options().setHeader(Arrays.asList("Supported variables are %name%, %displayname%, and %ping%"));
-            this.getConfig().setComments("format", null); // get rid of old comments added improperly
-        }
-        catch (NoSuchMethodError e)
-        {
-            // Older versions - This may not be necessary
-            this.getConfig().options().header("# Supported variables are %name%, %displayname%, and %ping%");
-        }
+        
+        this.getConfig().options().setHeader(Arrays.asList("Supported variables are %name%, %displayname%, and %ping%"));
+        this.getConfig().setComments("format", null); // get rid of old comments added improperly
+        
         if (!this.getConfig().contains("format-afk", true))
         {
             this.getConfig().set("format-afk", this.getConfig().getString("format") + " &eAFK");
