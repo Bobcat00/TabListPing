@@ -34,9 +34,8 @@ public class TabListPing extends JavaPlugin implements Listener
     Listeners listeners;
     TinyProtocol protocol;
     
-    // Use Spigot mappings here
-    private Class<?> OUT_KEEP_ALIVE_PACKET = Reflection.getClass("net.minecraft.network.protocol.common.ClientboundKeepAlivePacket");
-    private Class<?> IN_KEEP_ALIVE_PACKET = Reflection.getClass("net.minecraft.network.protocol.common.ServerboundKeepAlivePacket");
+    private Class<?> OUT_KEEP_ALIVE_PACKET;
+    private Class<?> IN_KEEP_ALIVE_PACKET;
     
     @Override
     public void onEnable()
@@ -55,6 +54,38 @@ public class TabListPing extends JavaPlugin implements Listener
         listeners = new Listeners(this);
         
         // Protocol hooks
+        
+        String bukkitVersion = getServer().getBukkitVersion().split("-")[0];
+        String outClassName;
+        String inClassName;
+        
+        // The idea here is to define the class names for old Minecraft versions,
+        // handling current and future versions in the default case.
+        // Use Spigot mappings.
+        switch (bukkitVersion)
+        {
+        case "1.18":
+        case "1.18.1":
+        case "1.18.2":
+        case "1.19":
+        case "1.19.1":
+        case "1.19.2":
+        case "1.19.3":
+        case "1.19.4":
+        case "1.20":
+        case "1.20.1":
+            outClassName = "net.minecraft.network.protocol.game.PacketPlayOutKeepAlive";
+            inClassName  = "net.minecraft.network.protocol.game.PacketPlayInKeepAlive";
+            break;
+        default:
+            outClassName = "net.minecraft.network.protocol.common.ClientboundKeepAlivePacket";
+            inClassName  = "net.minecraft.network.protocol.common.ServerboundKeepAlivePacket";
+            break;
+        }
+        getLogger().info("Detected " + bukkitVersion + ", using " + outClassName + " & " + inClassName);
+        OUT_KEEP_ALIVE_PACKET = Reflection.getClass(outClassName);
+        IN_KEEP_ALIVE_PACKET  = Reflection.getClass(inClassName);
+        
         this.protocol = new TinyProtocol(this)
         {
             // Server to client
