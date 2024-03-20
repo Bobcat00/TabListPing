@@ -1,6 +1,6 @@
 name: TabListPing
 main: com.bobcat00.tablistping.TabListPing
-version: ${project.version}
+version: '${project.version}'
 author: Bobcat00
-api-version: 1.18
+api-version: '1.18'
 softdepend: [Essentials]
