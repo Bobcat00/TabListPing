@@ -102,9 +102,9 @@ public class Config
                                                                "Supported variables are %name%, %displayname%, and %ping%"));
         
         plugin.getConfig().setComments("enable-tps", Arrays.asList(null, // Blank line
-                                                                   "Enable TPS/MSPT/Load/World display",
-                                                                   "Supported variables are %tps%, %mspt%, %load%, and %world%",
-                                                                   "Spigot only supports %world%"));
+                                                                   "Enable header/footer display",
+                                                                   "Supported variables are %name%, %displayname%, %tps%, %mspt%, %load%, and %world%",
+                                                                   "Spigot does not support %tps%, %mspt%, or %load%"));
         
         plugin.getConfig().setComments("enable-metrics", Arrays.asList(null, // Blank line
                                                                        "Enable metrics (subject to bStats global config)"));

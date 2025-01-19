@@ -77,6 +77,7 @@ public class TpsTask extends BukkitRunnable
         }
         
         // Create the strings with the non-player-specific variables replaced
+        // These are reused if a player changes worlds
         header = plugin.config.getFormatHeader();
         header = header.replace("%tps%", tpsString).
                         replace("%mspt%", msptString).
@@ -97,17 +98,23 @@ public class TpsTask extends BukkitRunnable
     // -------------------------------------------------------------------------
     
     // Set this player's header and footer. This uses the previously created
-    // header and footer strings, and replaces the player's %world% variable.
+    // header and footer strings, and replaces the player's variables.
     
     void setHeaderFooter(Player player)
     {
         if (player.hasPermission("tablistping.header"))
         {
-            player.setPlayerListHeader(ChatColor.translateAlternateColorCodes('&',header.replace("%world%", player.getWorld().getName())));
+            player.setPlayerListHeader(ChatColor.translateAlternateColorCodes('&',
+                       header.replace("%name%",        player.getName()).
+                              replace("%displayname%", player.getDisplayName()).
+                              replace("%world%",       player.getWorld().getName())));
         }
         if (player.hasPermission("tablistping.footer"))
         {
-            player.setPlayerListFooter(ChatColor.translateAlternateColorCodes('&',footer.replace("%world%", player.getWorld().getName())));
+            player.setPlayerListFooter(ChatColor.translateAlternateColorCodes('&',
+                       footer.replace("%name%",        player.getName()).
+                              replace("%displayname%", player.getDisplayName()).
+                              replace("%world%",       player.getWorld().getName())));
         }
     }
     

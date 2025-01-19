@@ -3,9 +3,9 @@
 format: '%name% &7[&a%ping%ms&7]'
 format-afk: '%name% &7[&a%ping%ms&7] &eAFK'
 
-# Enable TPS/MSPT/Load/World display
-# Supported variables are %tps%, %mspt%, %load%, and %world%
-# Spigot only supports %world%
+# Enable header/foot display
+# Supported variables are %name%, %displayname%, %tps%, %mspt%, %load%, and %world%
+# Spigot does not support %tps%, %mspt%, or %load%
 enable-tps: false
 format-header: ''
 format-footer: '&7TPS: %tps%   &7MSPT: %mspt%'
