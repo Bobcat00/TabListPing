@@ -16,6 +16,8 @@
 
 package com.bobcat00.tablistping;
 
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -33,23 +35,14 @@ import com.earth2me.essentials.User;
 import net.ess3.api.IUser;
 import net.ess3.api.events.AfkStatusChangeEvent;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 // This class primarily handles updating each player's ping time in the tab list.
 
 @SuppressWarnings("deprecation")
 public final class Listeners implements Listener
 {
     private TabListPing plugin;
+    private DataStore dataStore;
     private IEssentials ess;
-    
-    // Map containing Keep Alive time and ping time
-    private Map<UUID, List<Long>> keepAliveTime = Collections.synchronizedMap(new HashMap<UUID, List<Long>>());
     
     // -------------------------------------------------------------------------
     
@@ -58,6 +51,8 @@ public final class Listeners implements Listener
     public Listeners(TabListPing plugin)
     {
         this.plugin = plugin;
+        
+        this.dataStore = new DataStore(plugin);
         
         // Hook in to Essentials
         Plugin essentials = Bukkit.getPluginManager().getPlugin("Essentials");
@@ -90,18 +85,9 @@ public final class Listeners implements Listener
     
     public void processServerToClient(Player player)
     {
-        // Save time in hashmap
-        UUID uuid = player.getUniqueId();
         Long currentTime = System.currentTimeMillis();
-        List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
-        if (timeData == null)
-        {
-            timeData = new ArrayList<Long>(2);
-            timeData.add(0L);
-            timeData.add(0L);
-        }
-        timeData.set(0, currentTime);
-        keepAliveTime.put(uuid, timeData); // possibly blocking
+        UUID uuid = player.getUniqueId();
+        dataStore.saveTime(uuid, currentTime);
     }
     
     // -------------------------------------------------------------------------
@@ -113,22 +99,7 @@ public final class Listeners implements Listener
         // Get time from hashmap and calculate ping time in msec
         Long currentTime = System.currentTimeMillis();
         UUID uuid = player.getUniqueId();
-        
-        Long pingTime = 0L;
-        List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
-        if (timeData == null)
-        {
-            timeData = new ArrayList<Long>(2);
-            timeData.add(0L);
-            timeData.add(0L);
-        }
-        else
-        {
-            pingTime = currentTime - timeData.get(0);
-            timeData.set(1, pingTime);
-        }
-        keepAliveTime.put(uuid, timeData); // possibly blocking
-        final Long ping = pingTime;
+        final int pingTime = dataStore.calculatePing(uuid, currentTime);
         
         // go to the main thread
         Bukkit.getScheduler().runTask(plugin, new Runnable()
@@ -148,7 +119,7 @@ public final class Listeners implements Listener
                             afk = user.isAfk();
                         }
                     }
-                    setTabList(player, ping, afk);
+                    setTabList(player, pingTime, afk);
                 }
             }
         });
@@ -158,7 +129,7 @@ public final class Listeners implements Listener
     
     // Set tab list - Call from main thread only
     
-    private void setTabList(Player player, Long ping, boolean afk)
+    private void setTabList(Player player, int ping, boolean afk)
     {
         String format;
         if (afk)
@@ -174,7 +145,7 @@ public final class Listeners implements Listener
         player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',
                    format.replace("%name%",        player.getName()).
                           replace("%displayname%", player.getDisplayName()).
-                          replace("%ping%",        ping.toString())));
+                          replace("%ping%",        String.valueOf(ping))));
     }
     
     // -------------------------------------------------------------------------
@@ -188,12 +159,7 @@ public final class Listeners implements Listener
         if (player.isOnline())
         {
             UUID uuid = player.getUniqueId();
-            List<Long> timeData = keepAliveTime.get(uuid); // possibly blocking
-            Long ping = 0L;
-            if (timeData != null)
-            {
-                ping = timeData.get(1);
-            }
+            int ping = dataStore.getPing(uuid);
             setTabList(player, ping, event.getValue());
         }
     }
@@ -207,7 +173,7 @@ public final class Listeners implements Listener
         // Remove player's entry from hashmap
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        keepAliveTime.remove(uuid); // possibly blocking
+        dataStore.removeUuid(uuid);
     }
     
     // -------------------------------------------------------------------------
