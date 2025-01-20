@@ -16,6 +16,8 @@
 
 package com.bobcat00.tablistping;
 
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -187,6 +189,25 @@ public final class Listeners implements Listener
             Player player = event.getPlayer();
             plugin.tpsTask.setHeaderFooter(player);
         }
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Get ping report (for command)
+    
+    public Map<String, Integer> getPingReport()
+    {
+        Map<String, Integer> treeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        
+        for (Player player : plugin.getServer().getOnlinePlayers())
+        {
+            String name = player.getName();
+            UUID uuid = player.getUniqueId();
+            int ping = dataStore.getPing(uuid);
+            treeMap.put(name, ping);
+        }
+        
+        return treeMap;
     }
     
 }    

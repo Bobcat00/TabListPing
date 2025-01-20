@@ -18,6 +18,7 @@ package com.bobcat00.tablistping;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
@@ -25,6 +26,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 @SuppressWarnings("deprecation")
 public class Commands implements CommandExecutor, TabCompleter
@@ -39,13 +41,57 @@ public class Commands implements CommandExecutor, TabCompleter
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
     {
+        if (sender instanceof Player && !sender.hasPermission("tablistping.command"))
+        {
+            sender.sendMessage("You do not have permission for this command");
+            return true;
+        }
+        
+        // Subcommands
+        
         if (args.length == 1 && args[0].equalsIgnoreCase("reload"))
         {
+            if (sender instanceof Player && !sender.hasPermission("tablistping.command.reload"))
+            {
+                sender.sendMessage("You do not have permission for the reload command");
+                return true;
+            }
             plugin.config.reloadConfig();
             sender.sendMessage(ChatColor.AQUA + "TabListPing config reloaded");
             return true; // Normal return
         }
-        return false;
+        else if (args.length == 1 && args[0].equalsIgnoreCase("report"))
+        {
+            if (sender instanceof Player && !sender.hasPermission("tablistping.command.report"))
+            {
+                sender.sendMessage("You do not have permission for the report command");
+                return true;
+            }
+            Map<String, Integer> map = plugin.listeners.getPingReport();
+            if (map.isEmpty())
+            {
+                sender.sendMessage(ChatColor.AQUA + "No players online");
+            }
+            else
+            {
+                sender.sendMessage(ChatColor.AQUA + "Ping report:");
+                for (String name : map.keySet())
+                {
+                    Integer ping = map.get(name);
+                    sender.sendMessage(ChatColor.AQUA + name + ":  " + ping + " msec");
+                }
+            }
+            return true; // Normal return
+        }
+        else
+        {
+            sender.sendMessage(ChatColor.AQUA + "TabListPing version " + plugin.getDescription().getVersion());
+            sender.sendMessage(ChatColor.AQUA + "Reload - Reload config file");
+            sender.sendMessage(ChatColor.AQUA + "Report - Output ping report");
+            return true; // Normal return
+        }
+        
+        // return false;
     }
     
     @Override
@@ -55,6 +101,7 @@ public class Commands implements CommandExecutor, TabCompleter
         if (args.length == 1)
         {
             argList.add("reload");
+            argList.add("report");
             return argList.stream().filter(a -> a.startsWith(args[0])).collect(Collectors.toList());
         }
         return argList; // returns an empty list

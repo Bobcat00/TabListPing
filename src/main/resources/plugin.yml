@@ -6,11 +6,9 @@ api-version: '1.18'
 softdepend: [Essentials]
 commands:
   tablistping:
-    description: Reload TabListPing config file
+    description: TabListPing commands
     aliases: tlp
-    usage: "Usage: /tablistping reload"
-    permission: tablistping.reload
-    permission-message: You do not have permission for this command
+    permission: tablistping.command
 permissions:
   tablistping.header:
     description: Displays tab list header for this player
@@ -18,7 +16,15 @@ permissions:
   tablistping.footer:
     description: Displays tab list footer for this player
     default: false
-  tablistping.reload:
+  tablistping.command:
+    description: Required permission for all subcommands
+    default: op
+    children:
+      tablistping.command.reload: true
+      tablistping.command.report: true
+  tablistping.command.reload:
     description: Reload TabListPing config file
     default: op
-    
+  tablistping.command.report:
+    description: Produce ping report
+    default: op
