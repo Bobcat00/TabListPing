@@ -38,10 +38,23 @@ public class Commands implements CommandExecutor, TabCompleter
         this.plugin = plugin;
     }
     
+    // Check permission if the sender is a player, other return true
+    private boolean hasPermission(CommandSender sender, String permission)
+    {
+        if (!(sender instanceof Player))
+        {
+            return true;
+        }
+        else
+        {
+            return sender.hasPermission(permission);
+        }
+    }
+    
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
     {
-        if (sender instanceof Player && !sender.hasPermission("tablistping.command"))
+        if (!hasPermission(sender, "tablistping.command"))
         {
             sender.sendMessage("You do not have permission for this command");
             return true;
@@ -51,7 +64,7 @@ public class Commands implements CommandExecutor, TabCompleter
         
         if (args.length == 1 && args[0].equalsIgnoreCase("reload"))
         {
-            if (sender instanceof Player && !sender.hasPermission("tablistping.command.reload"))
+            if (!hasPermission(sender, "tablistping.command.reload"))
             {
                 sender.sendMessage("You do not have permission for the reload command");
                 return true;
@@ -62,7 +75,7 @@ public class Commands implements CommandExecutor, TabCompleter
         }
         else if (args.length == 1 && args[0].equalsIgnoreCase("report"))
         {
-            if (sender instanceof Player && !sender.hasPermission("tablistping.command.report"))
+            if (!hasPermission(sender, "tablistping.command.report"))
             {
                 sender.sendMessage("You do not have permission for the report command");
                 return true;
@@ -100,8 +113,14 @@ public class Commands implements CommandExecutor, TabCompleter
         List<String> argList = new ArrayList<>();
         if (args.length == 1)
         {
-            argList.add("reload");
-            argList.add("report");
+            if (hasPermission(sender, "tablistping.command.reload"))
+            {
+                argList.add("reload");
+            }
+            if (hasPermission(sender, "tablistping.command.report"))
+            {
+                argList.add("report");
+            }
             return argList.stream().filter(a -> a.startsWith(args[0])).collect(Collectors.toList());
         }
         return argList; // returns an empty list
