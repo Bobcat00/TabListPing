@@ -57,7 +57,7 @@ public class TpsTask extends BukkitRunnable
             final double tps = StrictMath.min(plugin.getServer().getTPS()[0], 20.0);
             final double mspt = plugin.getServer().getAverageTickTime();
 
-            final DecimalFormat df1 = new DecimalFormat("#.0");
+            final DecimalFormat df1 = new DecimalFormat("0.0");
 
             // Colors for the numeric values
             final String tpsColor  = (tps  >= 18.0 ? ChatColor.GREEN.toString() : tps  >= 15.0 ? ChatColor.YELLOW.toString() : ChatColor.RED.toString());
