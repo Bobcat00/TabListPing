@@ -39,6 +39,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -193,6 +194,16 @@ public abstract class TinyProtocol {
             public final void onPlayerLogin(PlayerLoginEvent e) {
                 if (closed)
                     return;
+
+                // Don't inject if the player isn't allowed to login
+                Result result = e.getResult();
+                if (result == Result.KICK_BANNED ||
+                    result == Result.KICK_FULL ||
+                    result == Result.KICK_OTHER ||
+                    result == Result.KICK_WHITELIST)
+                {
+                    return;
+                }
 
                 Channel channel = getChannel(e.getPlayer());
 
