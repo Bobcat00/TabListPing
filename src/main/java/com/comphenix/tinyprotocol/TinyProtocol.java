@@ -190,7 +190,7 @@ public abstract class TinyProtocol {
     private void registerBukkitEvents() {
         listener = new Listener() {
 
-            @EventHandler(priority = EventPriority.LOWEST)
+            @EventHandler(priority = EventPriority.MONITOR)
             public final void onPlayerLogin(PlayerLoginEvent e) {
                 if (closed)
                     return;
