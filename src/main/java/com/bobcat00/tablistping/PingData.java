@@ -21,10 +21,11 @@ package com.bobcat00.tablistping;
 
 class PingData
 {
-    private long lastPacketTime;
-    private int pingTime[];
-    private int head;
-    private int count;
+    private long lastPacketTime; // Time of last S->C Keep Alive packet
+    private int  pingTime[];
+    private int  head;
+    private int  count;
+    private long lastUpdateTime; // Time of last ping time calculation update
     
     final int size = 3;
 
@@ -38,11 +39,14 @@ class PingData
         this.pingTime = new int[size];
         this.head = 0;
         this.count = 0;
+        this.lastUpdateTime = 0;
     }
     
     // -------------------------------------------------------------------------
     
-    void addPacketTime(long packetTime)
+    // Set last packet time (Server to client time)
+    
+    void setPacketTime(long packetTime)
     {
         lastPacketTime = packetTime;
     }
@@ -98,6 +102,24 @@ class PingData
         }
         
         return sum / count;
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Set update time (ping time calculation)
+    
+    void setUpdateTime(long updateTime)
+    {
+        lastUpdateTime = updateTime;
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Get update time (ping time calculation)
+    
+    long getUpdateTime()
+    {
+        return lastUpdateTime;
     }
     
 }

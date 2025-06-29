@@ -50,7 +50,7 @@ public class DataStore
             // Create new entry
             pingData = new PingData();
         }
-        pingData.addPacketTime(currentTime);
+        pingData.setPacketTime(currentTime);
         pingMap.put(uuid, pingData);
     }
     
@@ -86,6 +86,38 @@ public class DataStore
             return 0;
         }
         return pingData.getAveragePingTime();
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Call when ping time is updated
+    
+    public void saveUpdateTime(UUID uuid, long currentTime)
+    {
+        PingData pingData = pingMap.get(uuid);
+        if (pingData == null)
+        {
+            // Create new entry
+            pingData = new PingData();
+        }
+        pingData.setUpdateTime(currentTime);
+        pingMap.put(uuid, pingData);
+    }
+    
+    // -------------------------------------------------------------------------
+    
+    // Call when ping time is calculated
+    
+    public long getUpdateTime(UUID uuid)
+    {
+        PingData pingData = pingMap.get(uuid);
+        if (pingData == null)
+        {
+            // Nothing to do since this is the client's response
+            return 0;
+        }
+        
+        return pingData.getUpdateTime();
     }
     
     // -------------------------------------------------------------------------

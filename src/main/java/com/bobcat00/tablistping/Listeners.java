@@ -45,6 +45,7 @@ public final class Listeners implements Listener
     private TabListPing plugin;
     private DataStore dataStore;
     private IEssentials ess;
+    private long minUpdateTime = 4500; // 4.5 seconds
     
     // -------------------------------------------------------------------------
     
@@ -83,7 +84,7 @@ public final class Listeners implements Listener
     
     // -------------------------------------------------------------------------
     
-    // Keep Alive from server to client
+    // Keep Alive from server to client. Always process this.
     
     public void processServerToClient(Player player)
     {
@@ -94,37 +95,45 @@ public final class Listeners implements Listener
     
     // -------------------------------------------------------------------------
     
-    // Keep Alive response from client to server
+    // Keep Alive response from client to server. Only process if the time since
+    // the last ping calculation is greater than minUpdateTime.
     
     public void processClientToServer(Player player)
     {
         // Get time from hashmap and calculate ping time in msec
         Long currentTime = System.currentTimeMillis();
         UUID uuid = player.getUniqueId();
-        final int pingTime = dataStore.calculatePing(uuid, currentTime);
         
-        // go to the main thread
-        Bukkit.getScheduler().runTask(plugin, new Runnable()
+        // Check if it's time to update ping time
+        if ((currentTime - dataStore.getUpdateTime(uuid)) >= minUpdateTime)
         {
-            @Override
-            public void run()
+            final int pingTime = dataStore.calculatePing(uuid, currentTime);
+            // Save time for update rate limiting
+            dataStore.saveUpdateTime(uuid, currentTime);
+
+            // go to the main thread
+            Bukkit.getScheduler().runTask(plugin, new Runnable()
             {
-                if (player.isOnline())
+                @Override
+                public void run()
                 {
-                    // Get AFK status
-                    boolean afk = false;
-                    if (ess != null)
+                    if (player.isOnline())
                     {
-                        User user = ess.getUser(player);
-                        if (user != null)
+                        // Get AFK status
+                        boolean afk = false;
+                        if (ess != null)
                         {
-                            afk = user.isAfk();
+                            User user = ess.getUser(player);
+                            if (user != null)
+                            {
+                                afk = user.isAfk();
+                            }
                         }
+                        setTabList(player, pingTime, afk);
                     }
-                    setTabList(player, pingTime, afk);
                 }
-            }
-        });
+            });
+        }
     }
     
     // -------------------------------------------------------------------------
