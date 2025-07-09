@@ -198,7 +198,15 @@ public abstract class TinyProtocol {
 
                 // Don't inject players that have been explicitly uninjected
                 if (!uninjectedChannels.contains(channel)) {
-                    injectPlayer(e.getPlayer());
+                    try
+                    {
+                        injectPlayer(e.getPlayer());
+                    }
+                    catch (Exception exc)
+                    {
+                        // Player likely disconnected, simply ignore
+                        plugin.getLogger().warning("Exception injecting " + e.getPlayer().getName() + " (This is likely harmless).");
+                    }
                 }
             }
 
