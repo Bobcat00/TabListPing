@@ -106,7 +106,7 @@ public class TabListPing extends JavaPlugin implements Listener
             @Override
             public Object onPacketOutAsync(Player receiver, Channel channel, Object packet)
             {
-                if (OUT_KEEP_ALIVE_PACKET.isInstance(packet))
+                if (OUT_KEEP_ALIVE_PACKET.isInstance(packet) && receiver != null)
                 {
                     listeners.processServerToClient(receiver);
                 }
@@ -117,7 +117,7 @@ public class TabListPing extends JavaPlugin implements Listener
             @Override
             public Object onPacketInAsync(Player sender, Channel channel, Object packet)
             {
-                if (IN_KEEP_ALIVE_PACKET.isInstance(packet))
+                if (IN_KEEP_ALIVE_PACKET.isInstance(packet) && sender != null)
                 {
                     listeners.processClientToServer(sender);
                 }
