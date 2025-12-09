@@ -75,7 +75,7 @@ public class TabListPing extends JavaPlugin implements Listener
         
         // The idea here is to define the class names for old Minecraft versions,
         // handling current and future versions in the default case.
-        // Use Spigot mappings.
+        // Use Mojang mappings starting with 1.21.11.
         switch (bukkitVersion)
         {
         case "1.18":
