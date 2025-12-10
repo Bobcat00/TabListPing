@@ -23,12 +23,10 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.Plugin;
 
 import com.earth2me.essentials.IEssentials;
@@ -42,10 +40,10 @@ import net.ess3.api.events.AfkStatusChangeEvent;
 @SuppressWarnings("deprecation")
 public final class Listeners implements Listener
 {
-    private TabListPing plugin;
-    private DataStore dataStore;
+    private final TabListPing plugin;
+    private final DataStore dataStore;
     private IEssentials ess;
-    private long minUpdateTime = 4500; // 4.5 seconds
+    private final long minUpdateTime = 4500; // 4.5 seconds
     
     // -------------------------------------------------------------------------
     
@@ -67,17 +65,17 @@ public final class Listeners implements Listener
         // Register events
         
         plugin.getServer().getPluginManager().registerEvent(PlayerQuitEvent.class, this, EventPriority.MONITOR,
-                new EventExecutor() { public void execute(Listener l, Event e) { onPlayerQuit((PlayerQuitEvent)e); }},
+                (l, e) -> onPlayerQuit((PlayerQuitEvent)e),
                 plugin, true); // ignoreCancelled=true
         
         plugin.getServer().getPluginManager().registerEvent(PlayerChangedWorldEvent.class, this, EventPriority.MONITOR,
-                new EventExecutor() { public void execute(Listener l, Event e) { onChangedWorld((PlayerChangedWorldEvent)e); }},
+                (l, e) -> onChangedWorld((PlayerChangedWorldEvent)e),
                 plugin, true); // ignoreCancelled=true
         
         if (ess != null)
         {
             plugin.getServer().getPluginManager().registerEvent(AfkStatusChangeEvent.class, this, EventPriority.MONITOR,
-                    new EventExecutor() { public void execute(Listener l, Event e) { onAfk((AfkStatusChangeEvent)e); }},
+                    (l, e) -> onAfk((AfkStatusChangeEvent)e),
                     plugin, true); // ignoreCancelled=true);
         }
     }
@@ -88,9 +86,11 @@ public final class Listeners implements Listener
     
     public void processServerToClient(Player player)
     {
-        Long currentTime = System.currentTimeMillis();
-        UUID uuid = player.getUniqueId();
-        dataStore.saveTime(uuid, currentTime);
+        if (player != null) {
+            long currentTime = System.currentTimeMillis();
+            UUID uuid = player.getUniqueId();
+            dataStore.saveTime(uuid, currentTime);
+        }
     }
     
     // -------------------------------------------------------------------------
@@ -100,23 +100,20 @@ public final class Listeners implements Listener
     
     public void processClientToServer(Player player)
     {
-        // Get time from hashmap and calculate ping time in msec
-        Long currentTime = System.currentTimeMillis();
-        UUID uuid = player.getUniqueId();
-        
-        // Check if it's time to update ping time
-        if ((currentTime - dataStore.getUpdateTime(uuid)) >= minUpdateTime)
-        {
-            final int pingTime = dataStore.calculatePing(uuid, currentTime);
-            // Save time for update rate limiting
-            dataStore.saveUpdateTime(uuid, currentTime);
+        if (player != null) {
+            // Get time from hashmap and calculate ping time in ms
+            long currentTime = System.currentTimeMillis();
+            UUID uuid = player.getUniqueId();
 
-            // go to the main thread
-            Bukkit.getScheduler().runTask(plugin, new Runnable()
+            // Check if it's time to update ping time
+            if ((currentTime - dataStore.getUpdateTime(uuid)) >= minUpdateTime)
             {
-                @Override
-                public void run()
-                {
+                final int pingTime = dataStore.calculatePing(uuid, currentTime);
+                // Save time for update rate limiting
+                dataStore.saveUpdateTime(uuid, currentTime);
+
+                // go to the main thread
+                Bukkit.getScheduler().runTask(plugin, () -> {
                     if (player.isOnline())
                     {
                         // Get AFK status
@@ -131,8 +128,8 @@ public final class Listeners implements Listener
                         }
                         setTabList(player, pingTime, afk);
                     }
-                }
-            });
+                });
+            }
         }
     }
     
